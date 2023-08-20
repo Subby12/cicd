@@ -1,6 +1,15 @@
-# ---- root/variables.tf
+# --- ec2/variables.tf
 
-variable "region" {
+variable "webserver_type" {
   type    = string
-  default = "us-east-1"
+  default = "t3.micro"
+}
+
+variable "kp_pb_sg" {}
+#variable "pt_sg" {}
+#variable "pt_sn" {}
+variable "kp_pb_sn" {}
+variable "key" {
+  type    = string   # Specify the type of the variable
+  default = "apair"   # Replace with the actual default key pair name
 }
