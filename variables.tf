@@ -1,15 +1,13 @@
-# --- ec2/variables.tf
+ #--- vpc/variables.tf
 
-variable "webserver_type" {
-  type    = string
-  default = "t3.micro"
+variable "vpc_cidr" {
+  type = string
 }
 
-variable "kp_pb_sg" {}
-#variable "pt_sg" {}
-#variable "pt_sn" {}
-variable "kp_pb_sn" {}
-variable "key" {
-  type    = string   # Specify the type of the variable
-  default = "apair"   # Replace with the actual default key pair name
+variable "pb_cidrs" {
+  type = list(any)
+}
+
+variable "ext_ip" {
+  type = string
 }
