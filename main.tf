@@ -1,18 +1,26 @@
-# ---- root/main.tf
+# --- ec2/main.tf
 
-module "vpc" {
-  source   = "./vpc"
-  vpc_cidr = "10.0.0.0/16"
-  ext_ip   = "0.0.0.0/0"
-  pb_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+resource "aws_launch_template" "asg_webserver" {
+  name_prefix            = "webserver"
+  image_id               = "ami-026b57f3c383c2eec"
+  instance_type          = var.webserver_type
+  vpc_security_group_ids = [var.kp_pb_sg]
+  key_name               = var.key
+
+  tags = {
+    Name = "webserver"
+  }
 }
 
-module "ec2" {
-  source   = "./ec2"
-  kp_pb_sg = module.vpc.kp_pb_sg
-  kp_pb_sn = module.vpc.kp_pb_sn
-  key      = "apair"
-  #pt_sg  = module.vpc.pt_sg
-  #pt_sn  = module.vpc.pt_sn
-  #alb_tg = module.lb.alb_tg
+resource "aws_autoscaling_group" "asg_webserver" {
+  name                = "asg_webserver"
+  vpc_zone_identifier = tolist(var.kp_pb_sn)
+  min_size            = 2
+  max_size            = 3
+  desired_capacity    = 2
+
+  launch_template {
+    id      = aws_launch_template.asg_webserver.id
+    version = "$Latest"
+  }
 }
