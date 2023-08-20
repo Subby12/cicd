@@ -1,26 +1,45 @@
-# --- ec2/main.tf
+resource "random_integer" "random" {
+  min = 1
+  max = 100
+}
 
-resource "aws_launch_template" "asg_webserver" {
-  name_prefix            = "webserver"
-  image_id               = "ami-026b57f3c383c2eec"
-  instance_type          = var.webserver_type
-  vpc_security_group_ids = [var.kp_pb_sg]
-  key_name               = var.key
+resource "aws_vpc" "kp_vpc" {
+  cidr_block           = var.vpc_cidr
+  enable_dns_hostnames = true
+  enable_dns_support   = true
 
   tags = {
-    Name = "webserver"
+    Name = "kp_vpc-${random_integer.random.id}"
   }
 }
 
-resource "aws_autoscaling_group" "asg_webserver" {
-  name                = "asg_webserver"
-  vpc_zone_identifier = tolist(var.kp_pb_sn)
-  min_size            = 2
-  max_size            = 3
-  desired_capacity    = 2
+resource "aws_subnet" "kp_pb_sn" {
+  count                   = length(var.pb_cidrs)
+  vpc_id                  = aws_vpc.kp_vpc.id
+  cidr_block              = var.pb_cidrs[count.index]
+  map_public_ip_on_launch = true
+  availability_zone       = ["us-east-1a", "us-east-1b"][count.index]
 
-  launch_template {
-    id      = aws_launch_template.asg_webserver.id
-    version = "$Latest"
+  tags = {
+    Name = "kp-pb_${count.index + 1}"
+  }
+}
+resource "aws_security_group" "kp_pb_sg" {
+  name        = "kp_cd_sg"
+  description = "SSH inbound traffic"
+  vpc_id      = aws_vpc.kp_vpc.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.ext_ip]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
